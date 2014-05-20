@@ -18,9 +18,8 @@ module HTTPServer
     def start
       Socket.tcp_server_loop(9393) do |client, sock|
         res = client.read(1000)
-        d = Response.new res
+        d = Response.new(res)
         a = d.headers
-        binding.pry
 
         client.write(http_ok)
         client.close
@@ -33,12 +32,12 @@ module HTTPServer
       end
 
       def raw_headers
-        @data.split(/\r\n/)[0..-1]
+        @data.split(/\r\n/)
       end
 
       def headers
         method, route, _ = raw_headers[0].split(/\s/)
-        {method: route}.merge(set_headers)
+        {'method' => method, 'route' => route }.merge(set_headers)
       end
 
       def set_headers
