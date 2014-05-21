@@ -48,12 +48,16 @@ module HTTPServer
     class HTTPResponse
       def initialize(headers={})
         @route  = headers['route']
+        if @route == '/' 
+          @route = "/index.html"
+        end
         @method = headers['method']
+        # TODO handle multiple filetypes
         @root   = Dir["./root/**/*.html"]
       end
 
       def create
-        if route?
+        if @root.include?("./root" + @route)
           case @method
           when 'GET' then do_get
           when 'POST' then do_post
@@ -84,20 +88,11 @@ module HTTPServer
       def response_message
         "#{HTTP_OK}Content-Length: #{contents.length}"\
         "\r\nContent-Type: text/html\r\nConnection: Closed\r\n"\
-          "\r\n<html>\n#{contents}\n</html>\n\r\n"
+          "\r\n#{contents}\n\r\n"
       end
 
       def main_header
         
-      end
-
-      def route?
-        if @route == '/' || @route == '/index.html'
-          File.exist?("./root/index.html")
-        else
-          @root.include?("./root" + @route)
-        end
-        # other routes...
       end
 
       def do_post
