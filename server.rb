@@ -15,7 +15,6 @@ module HTTPServer
           
           headers = parse_headers(res)
           http_res = HTTPResponse.new(client, headers)
-          binding.pry
           http_res.respond
           client.close
         end
