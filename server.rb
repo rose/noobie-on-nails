@@ -20,11 +20,11 @@ module HTTPServer
       puts "listening on port " + @port.to_s
       loop do
         Thread.start(server.accept) do |client|
-          res = client.read(300)
+          request = client.read(300)
 
-          headers = parse_headers(res)
-          http_res = HTTPResponse.new(client, headers)
-          http_res.respond
+          headers = parse_headers(request)
+          http_res = HTTPResponse.new(headers).create
+          client.write http_res
           client.close
         end
       end
@@ -46,18 +46,13 @@ module HTTPServer
 
 
     class HTTPResponse
-      def initialize(client, headers={})
-        @client = client
+      def initialize(headers={})
         @route  = headers['route']
         @method = headers['method']
         @root   = Dir["./root/**/*.html"]
       end
 
-      def respond
-        @client.write(response)
-      end
-
-      def response
+      def create
         if route?
           case @method
           when 'GET' then do_get
