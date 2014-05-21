@@ -1,14 +1,23 @@
 require 'net/http'
 require 'pry'
+
+
+
+
 module HTTPServer
+
   USERS = %q{matt rose georgie something peace yall}
   NOT_FOUND = "HTTP/1.1 404 NOT FOUND\r\n"
   HTTP_OK = "HTTP/1.1 200 OK\r\n"
+
   class Server
+    def initialize(port=9393)
+      @port = port
+    end
 
     def start
-
-      server = TCPServer.new 9393
+      server = TCPServer.new @port
+      puts "listening on port " + @port.to_s
       loop do
         Thread.start(server.accept) do |client|
           res = client.read(300)
