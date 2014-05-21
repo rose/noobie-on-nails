@@ -57,51 +57,37 @@ module HTTPServer
       end
 
       def create
-        if @root.include?("./root" + @route)
-          case @method
-          when 'GET' then do_get
+        case @method
+          when 'GET' 
+            if @root.include?("./root" + @route)
+              serve_file(200, "./root" + @route)
+            else
+              serve_file(404, "./root" + "/not-found.html")
+            end
           when 'POST' then do_post
           when 'UPDATE' then do_update
             # etc...
-          end
-        else
-          do_404
         end
       end
 
-      def do_404
-        "HTTP/1.1 404 NOT FOUND\r\n"
-      end
-
-      def do_get
-        response_message
-      end
-
-      def contents
-        if @route == '/'
-          File.read('./root/index.html')
-        else
-          File.read("./root#{@route}")
-        end
-      end
-
-      def response_message
-        "#{HTTP_OK}Content-Length: #{contents.length}"\
+      def serve_file(code, filename)
+        contents = File.read(filename)
+        code_header = make_code_header(code)
+        "#{code_header}Content-Length: #{contents.length}"\
         "\r\nContent-Type: text/html\r\nConnection: Closed\r\n"\
           "\r\n#{contents}\n\r\n"
       end
 
-      def main_header
-        
+      def make_code_header(code)
+        str = "HTTP/1.1 " + code.to_s
+        if code == 200
+          str += " OK"
+        elsif code == 404
+          str += " NOT FOUND"
+        end
+        str += "\r\n"
       end
 
-      def do_post
-
-      end
-
-      def do_update
-
-      end
     end
   end
 end
