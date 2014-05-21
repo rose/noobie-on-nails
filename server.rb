@@ -12,7 +12,7 @@ module HTTPServer
       loop do
         Thread.start(server.accept) do |client|
           res = client.read(300)
-          
+
           headers = parse_headers(res)
 
           http_res = HTTPResponse.new(headers, client)
@@ -21,21 +21,22 @@ module HTTPServer
         end
       end
     end
-    
+
     def parse_headers(res)
-        raw_headers = res.split(/\r\n/)
-        method, route, _ = raw_headers[0].split(/\s/)
-        response_type = {'method' => method, 'route' => route }
-        
-        hash = {}
-        raw_headers.each do |head|
-          key = head[/[\w\-]+(?=\:)/]
-          val = head[/(?<=\:\s).+(?=$)/]
-          hash[key] = val
-        end
-        hash.merge(response_type)
+
+      raw_headers = res.split(/\r\n/)
+      method, route, _ = raw_headers[0].split(/\s/)
+      response_type = {'method' => method, 'route' => route }
+
+      hash = {}
+      raw_headers.each do |head|
+        key = head[/[\w\-]+(?=\:)/]
+        val = head[/(?<=\:\s).+(?=$)/]
+        hash[key] = val
+      end
+      hash.merge(response_type)
     end
-    
+
 
     class HTTPResponse
       def initialize(data, client)
@@ -83,7 +84,7 @@ module HTTPServer
       def do_404
         "HTTP/1.1 404 NOT FOUND\r\n"
       end
-        
+
       def do_get
         response_message
       end
@@ -99,7 +100,7 @@ module HTTPServer
       def response_message
         "#{main_header}\r\nContent-Length: #{contents.length}"\
         "\r\nContent-Type: text/html\r\nConnection: Closed\r\n"\
-        "\r\n<html>\n#{contents}\n</html>\n\r\n"
+          "\r\n<html>\n#{contents}\n</html>\n\r\n"
       end
 
       def route?
@@ -112,11 +113,11 @@ module HTTPServer
       end
 
       def do_post
-        
+
       end
 
       def do_update
-        
+
       end
     end
   end
