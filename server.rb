@@ -6,29 +6,36 @@ module HTTPServer
 
   class Server
 
-
-    def index
-      File.read("./root/index.html")
-    end
-
-    def http_ok
-      "HTTP/1.1 200 OK\r\nContent-Length: 100\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\n<html>\n#{index}\n</html>\n\r\n"
-    end
-
     def start
-      Socket.tcp_server_loop(9393) do |client, sock|
-        res = client.read(1000)
-        d = Response.new(res)
-        a = d.headers
 
-        client.write(http_ok)
-        client.close
+      server = TCPServer.new 9393
+      loop do
+        Thread.start(server.accept) do |client|
+
+          res = client.read(300)
+          http_res = HTTPResponse.new(res, client)
+          http_res.respond
+          client.close
+        end
       end
+      # Socket.tcp_server_loop(9393) do |client, sock|
+      #   begin
+      #     res = client.read(1000)
+      #     if res
+      #       http_res = HTTPResponse.new(res, client)
+
+      #       http_res.respond
+      #     end
+      #   ensure
+      #     client.close
+      #   end
+      # end
     end
 
-    class Response
-      def initialize(data)
-        @data = data
+    class HTTPResponse
+      def initialize(data, client)
+        @data   = data
+        @client = client
       end
 
       def raw_headers
@@ -36,8 +43,12 @@ module HTTPServer
       end
 
       def headers
-        method, route, _ = raw_headers[0].split(/\s/)
-        {'method' => method, 'route' => route }.merge(set_headers)
+        begin
+          method, route, _ = raw_headers[0].split(/\s/)
+          {'method' => method, 'route' => route }.merge(set_headers)
+        rescue
+          binding.pry
+        end
       end
 
       def set_headers
@@ -48,6 +59,56 @@ module HTTPServer
           hash[key] = val
         end
         hash
+      end
+
+      def respond
+        @client.write(response)
+      end
+
+      def response
+        if route?
+          case headers['method']
+          when 'GET' then do_get
+          when 'POST' then do_post
+          when 'UPDATE' then do_update
+            # etc...
+          end
+        else
+          NOT_FOUND
+        end
+      end
+
+      def do_get
+        response_message
+      end
+
+      def contents
+        if headers['route'] == '/'
+          File.read('./root/index.html')
+        else
+          File.read("./root#{headers['route']}")
+        end
+      end
+
+      def response_message
+        "HTTP/1.1 200 OK\r\nContent-Length: #{contents.length - 1}\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\n<html>\n#{contents}\n</html>\n\r\n"
+      end
+
+      def route?
+        if headers['route'] == '/' || headers['route'] == '/index.html'
+          File.exist?("./root/index.html")
+        else
+
+        end
+        # other routes...
+      end
+
+      def do_post
+        
+      end
+
+      def do_update
+        
       end
     end
   end
