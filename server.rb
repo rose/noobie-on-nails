@@ -11,7 +11,6 @@ module HTTPServer
       server = TCPServer.new 9393
       loop do
         Thread.start(server.accept) do |client|
-
           res = client.read(300)
           http_res = HTTPResponse.new(res, client)
           http_res.respond
@@ -36,6 +35,7 @@ module HTTPServer
       def initialize(data, client)
         @data   = data
         @client = client
+        @root   = Dir["./root/**/*.html"]
       end
 
       def raw_headers
@@ -43,12 +43,8 @@ module HTTPServer
       end
 
       def headers
-        begin
-          method, route, _ = raw_headers[0].split(/\s/)
-          {'method' => method, 'route' => route }.merge(set_headers)
-        rescue
-          binding.pry
-        end
+        method, route, _ = raw_headers[0].split(/\s/)
+        {'method' => method, 'route' => route }.merge(set_headers)
       end
 
       def set_headers
@@ -91,14 +87,16 @@ module HTTPServer
       end
 
       def response_message
-        "HTTP/1.1 200 OK\r\nContent-Length: #{contents.length - 1}\r\nContent-Type: text/html\r\nConnection: Closed\r\n\r\n<html>\n#{contents}\n</html>\n\r\n"
+        "HTTP/1.1 200 OK\r\nContent-Length: #{contents.length}"\
+        "\r\nContent-Type: text/html\r\nConnection: Closed\r\n"\
+        "\r\n<html>\n#{contents}\n</html>\n\r\n"
       end
 
       def route?
         if headers['route'] == '/' || headers['route'] == '/index.html'
           File.exist?("./root/index.html")
         else
-
+          @root.include?("./root" + headers['route'])
         end
         # other routes...
       end
