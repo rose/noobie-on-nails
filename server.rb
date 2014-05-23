@@ -17,7 +17,7 @@ module HTTPServer
     end
 
     def start
-      server = TCPServer.new @port
+      server = TCPServer.new 9393
       puts "listening on port " + @port.to_s
       loop do
         Thread.start(server.accept) do |client|
@@ -84,4 +84,17 @@ module HTTPServer
   end
 end
 
-HTTPServer::Server.new.start
+def route1
+  return "<html><head><title>Bleep Bloop</title></head><body>booooooork</body></html>"
+end
+
+def route2
+  return "beeep"
+end
+
+routes = {}
+routes["blorp"] = route1
+routes["beep"] = route2
+puts routes
+
+HTTPServer::Server.new(port: 9393, routes: routes).start
