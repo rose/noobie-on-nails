@@ -11,13 +11,13 @@ module HTTPServer
   HTTP_OK = "HTTP/1.1 200 OK\r\n"
 
   class Server
-    def initialize(port=9393, routes={})
-      @port = port
-      @routes = routes
+    def initialize(settings)
+      @port = settings["port"]
+      @routes = settings["routes"]
     end
 
     def start
-      server = TCPServer.new 9393
+      server = TCPServer.new @port
       puts "listening on port " + @port.to_s
       loop do
         Thread.start(server.accept) do |client|
@@ -48,11 +48,9 @@ module HTTPServer
 
     def get_content(headers)
       name = headers['route']
-      #binding.pry
       if @routes.include? name
-        return routes[name]
+        return 200, @routes[name]
       else
-        #binding.pry
         filename = './root' + name
         if File.file? filename
           return 200, (File.read filename)
@@ -66,7 +64,6 @@ module HTTPServer
 
     def http_create(code, content)
       code_header = make_code_header(code)
-      #binding.pry
       "#{code_header}Content-Length: #{content.length}"\
       "\r\nContent-Type: text/html\r\nConnection: Closed\r\n"\
       "\r\n#{content}\n\r\n"
@@ -93,8 +90,7 @@ def route2
 end
 
 routes = {}
-routes["blorp"] = route1
-routes["beep"] = route2
-puts routes
+routes["/blorp"] = route1
+routes["/beep"] = route2
 
-HTTPServer::Server.new(port: 9393, routes: routes).start
+HTTPServer::Server.new({"port" => 9393, "routes" => routes}).start
