@@ -1,6 +1,6 @@
 require 'net/http'
 require 'pry'
-
+require './route.rb'
 
 
 
@@ -11,9 +11,8 @@ module HTTPServer
   HTTP_OK = "HTTP/1.1 200 OK\r\n"
 
   class Server
-    def initialize(settings)
+    def initialize(settings={})
       @port = settings["port"]
-      @routes = settings["routes"]
     end
 
     def start
@@ -23,13 +22,29 @@ module HTTPServer
         Thread.start(server.accept) do |client|
           request = client.read(300)
 
-          headers = parse_headers(request)
-          code, content = get_content(headers)
-          http_res = http_create(code, content)
-          client.write http_res
-          client.close
+          begin
+            headers = parse_headers(request)
+
+            route = Route.new headers['route'].gsub(/\/$/, '')
+            
+            client.write route.parse_route
+            client.close
+            # http_res = http_create(code, content)
+            # client.write http_res
+          rescue Exception => e
+            error = map_error(e)
+            client.write(http_create(404, error))
+            client.close
+          end
         end
       end
+    end
+
+    def map_error(msg)
+      trace = [msg.to_s] + msg.backtrace 
+      trace.map! { |e| "<li>#{e}</li>" }
+
+      return "<ul>#{trace}</ul>"
     end
 
     def parse_headers(res)
@@ -60,6 +75,10 @@ module HTTPServer
           return 404, (File.read "./root/not-found.html")
         end
       end
+    end
+
+    def not_found
+      http_create(404, File.read("./root/not-found.html"))
     end
 
     def http_create(code, content)

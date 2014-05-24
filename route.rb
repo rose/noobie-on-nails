@@ -5,20 +5,33 @@ module HTTPServer
     class Route < Server
       def initialize(route)
         @route = route == "/" ? "/index.html" : route
+        @files = Dir.glob("*/**/*")
       end
 
       def parse_route
         if route_defined?
           if index_exist?
             http_create(200, File.read("./root#{@route}/index.html"))
-          else
+          elsif file_exist?
             http_create(200, File.read("./root#{@route}"))
+          else
+            not_found
           end
-        elsif File.directory? "./root#{@route}"
-          extract_path
         else
-          http_create(404, File.read("./root/not-found.html") + "#{@route} not found")
+          extract_path
         end
+      end
+
+      def base_route
+        @route[/^.+?[^\/:](?=[?\/]|$)/]
+      end
+
+      def route_exists?
+        @files.include?("root#{base_route}")
+      end
+
+      def file_exist?
+        File.file?("./root#{@route}")
       end
 
       def index_exist?
@@ -30,21 +43,41 @@ module HTTPServer
       end
 
       def extract_path
-        base, action = File.split @route
+        @base, *@action = @route.scan(/(\/\w+(?=\/)|\w+$)/).flatten
 
-        if respond_to? action.to_sym
-          self.send action, base
+        case @action.length
+        when 1
+          # for now, returns itself
+          http_create(200, "<h1>#{@action.first}</h1>")
+        when 2
+          if respond_to? @action.last
+            self.send @action.last
+          else
+            not_found
+          end
         else
-          http_create(200, "<h1>#{action}</h1>")
+          not_found
         end
       end
 
-      def delete
-        binding.pry
+      def edit
+        http_create 200, "<h1>Edit for #{@action.first}</h1>"
       end
 
-      def show(base=nil)
-        binding.pry
+      def target
+        @base[/\w+$/]
+      end
+
+      def update
+        http_create 404, File.read("./root/not-found.html") + "<h1>update not implemented</h1>"
+      end
+
+      def delete
+        http_create 404, File.read("./root/not-found.html") + "<h1>delete not implemented</h1>"
+      end
+
+      def show
+        http_create 404, File.read("./root/not-found.html") + "<h1>show not implemented</h1>"
       end
     end
   end
