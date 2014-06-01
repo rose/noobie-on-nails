@@ -13,9 +13,13 @@ The Router class defines mappings of urls to functions.  The Server class parses
 You can test this out by cloning this repo and running `ruby app.rb`.  Then you can view the sample files and routes by navigating to:
 
 `localhost:9393/static.html` (fetches root/static.html)
+
 `localhost:9393/` (fetches root/index.html)
+
 `localhost:9393/posts` (fetches root/posts/index.html)
+
 `localhost:9393/bleep` (calls the function bound to bleep in app.rb)
+
 `localhost:9393/greet/yourname` (greets a user named yourname, as defined in app.rb)
 
 Feel free to play around with it; pull requests are welcome.
