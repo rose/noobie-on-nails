@@ -1,5 +1,5 @@
 require './server.rb' 
-require './route2.rb' 
+require './router.rb' 
 
 
 route1 = lambda do |captures|
